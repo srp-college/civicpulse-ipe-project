@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CivicPulse — Smart City &amp; Campus Civic Issue Portal</title>
+  <!-- Load Tailwind CSS for clean responsive layout and typography -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            civic: {
+              950: '#09182d',
+              900: '#0f294a',
+              800: '#173b69',
+              700: '#1e4e8c',
+              100: '#e6eef8',
+              50: '#f3f7fc',
+            },
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-slate-100 text-slate-900 font-sans antialiased min-h-screen flex flex-col selection:bg-civic-900 selection:text-white">
+
+  <!-- Top Navigation & Live Summary Header -->
+  <header class="bg-civic-900 text-white shadow-md border-b border-civic-800 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <!-- Brand Identity -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6 text-sky-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">CivicPulse</h1>
+                <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-sky-500/20 text-sky-200 border border-sky-400/30">
+                  Live Portal
+                </span>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-300">Smart City &amp; Campus Civic Issue Management</p>
+            </div>
+          </div>
+
+          <!-- Header Utility Buttons (Mobile Compact) -->
+          <div class="flex lg:hidden items-center gap-2">
+            <button type="button" id="exportBtnMobile" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white border border-white/15 transition">
+              Export JSON
+            </button>
+          </div>
+        </div>
+
+        <!-- Live KPI Counters & Desktop Utility Actions -->
+        <div class="flex flex-wrap items-center justify-between lg:justify-end gap-3">
+          <div class="grid grid-cols-4 gap-2 sm:gap-3 w-full sm:w-auto">
+            <div class="bg-civic-950/70 border border-white/10 rounded-xl px-3 py-2 text-center min-w-[74px]">
+              <div id="statTotal" class="text-lg sm:text-xl font-extrabold text-white">0</div>
+              <div class="text-[11px] uppercase tracking-wider text-slate-300 font-medium">Total</div>
+            </div>
+            <div class="bg-rose-950/50 border border-rose-400/30 rounded-xl px-3 py-2 text-center min-w-[74px]">
+              <div id="statOpen" class="text-lg sm:text-xl font-extrabold text-rose-300">0</div>
+              <div class="text-[11px] uppercase tracking-wider text-rose-200 font-medium">Open</div>
+            </div>
+            <div class="bg-amber-950/50 border border-amber-400/30 rounded-xl px-3 py-2 text-center min-w-[74px]">
+              <div id="statProgress" class="text-lg sm:text-xl font-extrabold text-amber-300">0</div>
+              <div class="text-[11px] uppercase tracking-wider text-amber-200 font-medium">In Progress</div>
+            </div>
+            <div class="bg-emerald-950/50 border border-emerald-400/30 rounded-xl px-3 py-2 text-center min-w-[74px]">
+              <div id="statResolved" class="text-lg sm:text-xl font-extrabold text-emerald-300">0</div>
+              <div class="text-[11px] uppercase tracking-wider text-emerald-200 font-medium">Resolved</div>
+            </div>
+          </div>
+
+          <div class="hidden lg:flex items-center gap-2 pl-2 border-l border-white/15">
+            <button type="button" id="resetBtnDesktop" class="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-slate-100 border border-white/15 transition">
+              Reset Sample Data
+            </button>
+            <button type="button" id="exportBtnDesktop" class="px-3.5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-xs font-bold text-slate-950 shadow-sm transition">
+              Export JSON
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Inline Notification Banner (Replaces alert/confirm) -->
+  <div id="toastBanner" role="status" aria-live="polite" class="hidden max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+    <div id="toastBox" class="rounded-xl px-4 py-3 border flex items-center justify-between gap-3 shadow-sm bg-emerald-50 border-emerald-200 text-emerald-900">
+      <div class="flex items-center gap-2.5 text-sm font-medium">
+        <span id="toastMessage">Complaint logged successfully.</span>
+        <button type="button" id="copyIdBtn" class="hidden px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition">
+          Copy Ticket ID
+        </button>
+      </div>
+      <button type="button" id="closeToastBtn" class="text-slate-500 hover:text-slate-800 p-1 rounded-lg" aria-label="Dismiss notification">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Two-Column Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- Left Column: Citizen / Student Issue Submission Form -->
+      <section aria-labelledby="formHeading" class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+        <div class="border-b border-slate-100 pb-4 mb-5">
+          <span class="inline-block text-xs font-bold uppercase tracking-wider text-civic-700 bg-civic-50 px-2.5 py-1 rounded-md mb-1.5">
+            Citizen &amp; Campus Desk
+          </span>
+          <h2 id="formHeading" class="text-lg sm:text-xl font-bold text-slate-900">Report a Civic Issue</h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Submit infrastructure or facility faults to generate an instant tracking ticket.
+          </p>
+        </div>
+
+        <form id="issueForm" novalidate class="space-y-4">
+          <!-- Issue Title -->
+          <div>
+            <label for="issueTitle" class="block text-sm font-semibold text-slate-800 mb-1">
+              Issue Title <span class="text-rose-600">*</span>
+            </label>
+            <input
+              type="text"
+              id="issueTitle"
+              name="issueTitle"
+              maxlength="90"
+              placeholder="e.g., Deep pothole near Main Gate roundabout"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-civic-700 focus:border-civic-700 transition"
+            />
+            <p id="errTitle" class="hidden text-xs font-medium text-rose-600 mt-1"></p>
+          </div>
+
+          <!-- Category & Priority Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="issueCategory" class="block text-sm font-semibold text-slate-800 mb-1">
+                Category <span class="text-rose-600">*</span>
+              </label>
+              <select
+                id="issueCategory"
+                name="issueCategory"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-civic-700 focus:border-civic-700 transition"
+              >
+                <option value="Pothole">Pothole</option>
+                <option value="Streetlight">Streetlight</option>
+                <option value="Water Supply">Water Supply</option>
+                <option value="Waste & Sanitation">Waste &amp; Sanitation</option>
+                <option value="Campus Facility">Campus Facility</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="issuePriority" class="block text-sm font-semibold text-slate-800 mb-1">
+                Priority Level <span class="text-rose-600">*</span>
+              </label>
+              <select
+                id="issuePriority"
+                name="issuePriority"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-civic-700 focus:border-civic-700 transition"
+              >
+                <option value="Low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Location / Ward / Block & Reporter Name -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="issueLocation" class="block text-sm font-semibold text-slate-800 mb-1">
+                Location / Ward / Block <span class="text-rose-600">*</span>
+              </label>
+              <input
+                type="text"
+                id="issueLocation"
+                name="issueLocation"
+                maxlength="70"
+                placeholder="e.g., Ward 4 / Engineering Block B"
+                class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-civic-700 focus:border-civic-700 transition"
+              />
+              <p id="errLocation" class="hidden text-xs font-medium text-rose-600 mt-1"></p>
+            </div>
+
+            <div>
+              <label for="reporterName" class="block text-sm font-semibold text-slate-800 mb-1">
+                Reporter Name <span class="text-rose-600">*</span>
+              </label>
+              <input
+                type="text"
+                id="reporterName"
+                name="reporterName"
+                maxlength="50"
+                placeholder="e.g., Shashank Patil"
+                class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-civic-700 focus:border-civic-700 transition"
+              />
+              <p id="errReporter" class="hidden text-xs font-medium text-rose-600 mt-1"></p>
+            </div>
+          </div>
+
+          <!-- Detailed Description -->
+          <div>
+            <label for="issueDescription" class="block text-sm font-semibold text-slate-800 mb-1">
+              Description <span class="text-rose-600">*</span>
+            </label>
+            <textarea
+              id="issueDescription"
+              name="issueDescription"
+              rows="3"
+              maxlength="400"
+              placeholder="Describe the issue clearly, nearby landmarks, and any safety hazard..."
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-civic-700 focus:border-civic-700 transition"
+            ></textarea>
+            <p id="errDescription" class="hidden text-xs font-medium text-rose-600 mt-1"></p>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-1 flex flex-col sm:flex-row gap-2.5">
+            <button
+              type="submit"
+              class="w-full bg-civic-900 hover:bg-civic-800 active:bg-civic-950 text-white font-semibold text-sm py-3 px-5 rounded-xl shadow-sm transition flex items-center justify-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Submit Complaint Ticket
+            </button>
+            <button
+              type="button"
+              id="resetBtnMobile"
+              class="lg:hidden w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-3 px-4 rounded-xl border border-slate-200 transition"
+            >
+              Reset Sample
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Right Column: Search, Filters & Live Issue Management Feed -->
+      <section aria-labelledby="feedHeading" class="lg:col-span-7 space-y-4">
+        <!-- Search & Filter Control Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 id="feedHeading" class="text-lg sm:text-xl font-bold text-slate-900">Active Issue Registry</h2>
+              <p class="text-xs sm:text-sm text-slate-500">Search tickets, filter by ward/category, or update resolution status.</p>
+            </div>
+            <span id="visibleCountBadge" class="self-start sm:self-center text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+              Showing 0 issues
+            </span>
+          </div>
+
+          <!-- Search Input & Category Filter -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-7 relative">
+              <label for="searchInput" class="sr-only">Search by title, ticket ID, or location</label>
+              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
+              </svg>
+              <input
+                type="search"
+                id="searchInput"
+                placeholder="Search by Ticket ID (CP-1001), title, or ward..."
+                class="w-full rounded-xl border border-slate-300 pl-10 pr-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-civic-700 focus:border-civic-700 transition"
+              />
+            </div>
+
+            <div class="sm:col-span-5">
+              <label for="categoryFilter" class="sr-only">Filter by category</label>
+              <select
+                id="categoryFilter"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-civic-700 focus:border-civic-700 transition"
+              >
+                <option value="All">All Categories</option>
+                <option value="Pothole">Pothole</option>
+                <option value="Streetlight">Streetlight</option>
+                <option value="Water Supply">Water Supply</option>
+                <option value="Waste & Sanitation">Waste &amp; Sanitation</option>
+                <option value="Campus Facility">Campus Facility</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Status Filter Pills -->
+          <div id="statusPills" role="group" aria-label="Filter by issue status" class="flex flex-wrap items-center gap-2 pt-1">
+            <button type="button" data-status="All" class="status-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-civic-900 text-white shadow-sm transition">
+              All
+            </button>
+            <button type="button" data-status="Open" class="status-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+              Open
+            </button>
+            <button type="button" data-status="In Progress" class="status-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+              In Progress
+            </button>
+            <button type="button" data-status="Resolved" class="status-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+              Resolved
+            </button>
+          </div>
+        </div>
+
+        <!-- Issue Cards Feed Container -->
+        <div id="issueList" class="space-y-3.5"></div>
+
+        <!-- Empty State (Shown when filters match zero records) -->
+        <div id="emptyState" class="hidden bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+          <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-500 mx-auto flex items-center justify-center mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-base font-bold text-slate-800">No matching civic issues found</h3>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
+            Try clearing your search term, switching status filters, or restoring the sample dataset.
+          </p>
+          <button type="button" id="clearFiltersBtn" class="mt-4 px-4 py-2 rounded-xl bg-civic-900 hover:bg-civic-800 text-white text-xs font-semibold transition">
+            Clear Active Filters
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <span>CivicPulse — Smart City &amp; Campus Civic Issue Portal</span>
+      <span>Client-side persistence active via browser localStorage</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const STORAGE_KEY = 'civicpulse_issues_v1';
+
+      // Default sample issues preloaded on first visit or reset
+      const SAMPLE_ISSUES = [
+        {
+          id: 'CP-1001',
+          title: 'Deep road pothole near Main Gate roundabout',
+          category: 'Pothole',
+          location: 'Ward 4 • North Campus Gate',
+          priority: 'Urgent',
+          reporter: 'Aarav Mehta',
+          description: 'Large water-filled pothole in the left turning lane causing sudden braking for two-wheelers and shuttle buses.',
+          status: 'Open',
+          createdAt: '2026-11-20 09:15 AM'
+        },
+        {
+          id: 'CP-1002',
+          title: 'Flickering LED streetlights along Hostel Walkway',
+          category: 'Streetlight',
+          location: 'Block C • Pedestrian Avenue',
+          priority: 'High',
+          reporter: 'Priya Nair',
+          description: 'Three consecutive streetlamp poles between Block C and the Central Library remain off after 7:00 PM.',
+          status: 'In Progress',
+          createdAt: '2026-11-20 06:40 PM'
+        },
+        {
+          id: 'CP-1003',
+          title: 'Pipeline valve leakage near Community Park',
+          category: 'Water Supply',
+          location: 'Ward 7 • Greenview Sector',
+          priority: 'High',
+          reporter: 'Rohan Kulkarni',
+          description: 'Continuous clean water seepage from the underground distribution valve chamber onto the footpath.',
+          status: 'Open',
+          createdAt: '2026-11-21 11:05 AM'
+        },
+        {
+          id: 'CP-1004',
+          title: 'Overflowing recycling bins behind Cafeteria Plaza',
+          category: 'Waste & Sanitation',
+          location: 'Central Plaza • Zone B',
+          priority: 'Medium',
+          reporter: 'Sneha Joshi',
+          description: 'Dry and wet waste containers require scheduled morning clearance and an additional covered bin.',
+          status: 'Resolved',
+          createdAt: '2026-11-19 02:30 PM'
+        }
+      ];
+
+      // Application State
+      let issues = [];
+      let activeStatusFilter = 'All';
+      let activeCategoryFilter = 'All';
+      let searchQuery = '';
+      let lastCreatedId = '';
+
+      // DOM References
+      const issueForm = document.getElementById('issueForm');
+      const issueList = document.getElementById('issueList');
+      const emptyState = document.getElementById('emptyState');
+      const visibleCountBadge = document.getElementById('visibleCountBadge');
+      const searchInput = document.getElementById('searchInput');
+      const categoryFilter = document.getElementById('categoryFilter');
+      const statusPills = document.querySelectorAll('.status-pill');
+
+      const statTotal = document.getElementById('statTotal');
+      const statOpen = document.getElementById('statOpen');
+      const statProgress = document.getElementById('statProgress');
+      const statResolved = document.getElementById('statResolved');
+
+      const toastBanner = document.getElementById('toastBanner');
+      const toastBox = document.getElementById('toastBox');
+      const toastMessage = document.getElementById('toastMessage');
+      const copyIdBtn = document.getElementById('copyIdBtn');
+      const closeToastBtn = document.getElementById('closeToastBtn');
+
+      // Load issues from localStorage or seed initial sample data
+      function loadIssues() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              issues = parsed;
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('Failed to read localStorage:', err);
+        }
+        issues = SAMPLE_ISSUES.map(item => ({ ...item }));
+        saveIssues();
+      }
+
+      // Persist current issues array to localStorage
+      function saveIssues() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(issues));
+        } catch (err) {
+          console.error('Failed to save to localStorage:', err);
+        }
+      }
+
+      // Format current date & time cleanly
+      function formatTimestamp(date) {
+        return date.toLocaleString('en-IN', {
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+      }
+
+      // Generate unique sequential tracking ID (e.g., CP-1005)
+      function generateTicketId() {
+        let maxNum = 1000;
+        issues.forEach(item => {
+          const match = /^CP-(\d+)$/.exec(item.id);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        });
+        return 'CP-' + (maxNum + 1);
+      }
+
+      // Show non-blocking inline notification banner
+      function showToast(message, type = 'success', ticketId = '') {
+        toastMessage.textContent = message;
+        lastCreatedId = ticketId;
+
+        toastBox.className = 'rounded-xl px-4 py-3 border flex items-center justify-between gap-3 shadow-sm ';
+        if (type === 'info') {
+          toastBox.className += 'bg-sky-50 border-sky-200 text-sky-900';
+        } else {
+          toastBox.className += 'bg-emerald-50 border-emerald-200 text-emerald-900';
+        }
+
+        if (ticketId) {
+          copyIdBtn.classList.remove('hidden');
+          copyIdBtn.textContent = 'Copy ' + ticketId;
+        } else {
+          copyIdBtn.classList.add('hidden');
+        }
+
+        toastBanner.classList.remove('hidden');
+      }
+
+      // Copy Ticket ID using reliable fallback
+      copyIdBtn.addEventListener('click', () => {
+        if (!lastCreatedId) return;
+        const tempInput = document.createElement('input');
+        tempInput.value = lastCreatedId;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        try {
+          document.execCommand('copy');
+          copyIdBtn.textContent = 'Copied!';
+        } catch (e) {
+          console.error('Copy failed:', e);
+        }
+        document.body.removeChild(tempInput);
+      });
+
+      closeToastBtn.addEventListener('click', () => {
+        toastBanner.classList.add('hidden');
+      });
+
+      // Badge color mappings
+      function getStatusBadgeClasses(status) {
+        switch (status) {
+          case 'Open':
+            return 'bg-rose-50 text-rose-700 border-rose-200';
+          case 'In Progress':
+            return 'bg-amber-50 text-amber-800 border-amber-200';
+          case 'Resolved':
+            return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          default:
+            return 'bg-slate-100 text-slate-700 border-slate-200';
+        }
+      }
+
+      function getPriorityBadgeClasses(priority) {
+        switch (priority) {
+          case 'Urgent':
+            return 'bg-rose-600 text-white';
+          case 'High':
+            return 'bg-orange-100 text-orange-800 border border-orange-200';
+          case 'Medium':
+            return 'bg-sky-100 text-sky-800 border border-sky-200';
+          case 'Low':
+          default:
+            return 'bg-slate-100 text-slate-700 border border-slate-200';
+        }
+      }
+
+      // Update live top KPI counters
+      function updateCounters() {
+        const total = issues.length;
+        const openCount = issues.filter(i => i.status === 'Open').length;
+        const progressCount = issues.filter(i => i.status === 'In Progress').length;
+        const resolvedCount = issues.filter(i => i.status === 'Resolved').length;
+
+        statTotal.textContent = total;
+        statOpen.textContent = openCount;
+        statProgress.textContent = progressCount;
+        statResolved.textContent = resolvedCount;
+      }
+
+      // Cycle status Open -> In Progress -> Resolved -> Open
+      function cycleIssueStatus(id) {
+        const order = ['Open', 'In Progress', 'Resolved'];
+        const target = issues.find(item => item.id === id);
+        if (!target) return;
+        const nextIndex = (order.indexOf(target.status) + 1) % order.length;
+        target.status = order[nextIndex];
+        saveIssues();
+        renderAll();
+        showToast(`Ticket ${target.id} status updated to "${target.status}".`, 'info');
+      }
+
+      // Set explicit status from dropdown
+      function setIssueStatus(id, newStatus) {
+        const target = issues.find(item => item.id === id);
+        if (!target || target.status === newStatus) return;
+        target.status = newStatus;
+        saveIssues();
+        renderAll();
+        showToast(`Ticket ${target.id} marked as "${newStatus}".`, 'info');
+      }
+
+      // Delete an entry from the log
+      function deleteIssue(id) {
+        const index = issues.findIndex(item => item.id === id);
+        if (index === -1) return;
+        const removed = issues.splice(index, 1)[0];
+        saveIssues();
+        renderAll();
+        showToast(`Ticket ${removed.id} removed from registry.`, 'info');
+      }
+
+      // Build safe DOM element for a single issue card (prevents XSS)
+      function createIssueCard(issue) {
+        const card = document.createElement('article');
+        card.className = 'bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 hover:border-slate-300 transition';
+
+        // Top metadata row
+        const topRow = document.createElement('div');
+        topRow.className = 'flex flex-wrap items-center justify-between gap-2 mb-2.5';
+
+        const leftBadges = document.createElement('div');
+        leftBadges.className = 'flex flex-wrap items-center gap-2';
+
+        const idTag = document.createElement('span');
+        idTag.className = 'font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-civic-900 text-white';
+        idTag.textContent = issue.id;
+
+        const statusBadge = document.createElement('span');
+        statusBadge.className = `text-xs font-semibold px-2.5 py-1 rounded-full border ${getStatusBadgeClasses(issue.status)}`;
+        statusBadge.textContent = issue.status;
+
+        const priorityBadge = document.createElement('span');
+        priorityBadge.className = `text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${getPriorityBadgeClasses(issue.priority)}`;
+        priorityBadge.textContent = issue.priority;
+
+        const categoryBadge = document.createElement('span');
+        categoryBadge.className = 'text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700';
+        categoryBadge.textContent = issue.category;
+
+        leftBadges.append(idTag, statusBadge, priorityBadge, categoryBadge);
+
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'text-xs text-slate-400 font-medium';
+        timeSpan.textContent = issue.createdAt;
+
+        topRow.append(leftBadges, timeSpan);
+
+        // Title & Description
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'text-base sm:text-lg font-bold text-slate-900 break-words';
+        titleEl.textContent = issue.title;
+
+        const descEl = document.createElement('p');
+        descEl.className = 'text-sm text-slate-600 mt-1.5 leading-relaxed break-words';
+        descEl.textContent = issue.description;
+
+        // Bottom location, reporter & quick action bar
+        const bottomRow = document.createElement('div');
+        bottomRow.className = 'mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3';
+
+        const metaInfo = document.createElement('div');
+        metaInfo.className = 'flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600';
+
+        const locSpan = document.createElement('span');
+        locSpan.className = 'inline-flex items-center gap-1 font-medium text-slate-700 break-words';
+        locSpan.innerHTML = '<svg class="w-3.5 h-3.5 text-civic-700 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+        const locText = document.createTextNode(issue.location);
+        locSpan.appendChild(locText);
+
+        const repSpan = document.createElement('span');
+        repSpan.className = 'text-slate-500';
+        repSpan.textContent = 'Reported by: ' + issue.reporter;
+
+        metaInfo.append(locSpan, repSpan);
+
+        // Action Controls
+        const controls = document.createElement('div');
+        controls.className = 'flex items-center gap-2 self-end sm:self-center';
+
+        const statusSelect = document.createElement('select');
+        statusSelect.setAttribute('aria-label', `Change status for ${issue.id}`);
+        statusSelect.className = 'rounded-lg border border-slate-300 bg-slate-50 hover:bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-civic-700 transition';
+        ['Open', 'In Progress', 'Resolved'].forEach(st => {
+          const opt = document.createElement('option');
+          opt.value = st;
+          opt.textContent = st;
+          if (st === issue.status) opt.selected = true;
+          statusSelect.appendChild(opt);
+        });
+        statusSelect.addEventListener('change', (e) => setIssueStatus(issue.id, e.target.value));
+
+        const cycleBtn = document.createElement('button');
+        cycleBtn.type = 'button';
+        cycleBtn.title = 'Cycle next status';
+        cycleBtn.className = 'px-2.5 py-1.5 rounded-lg bg-civic-50 hover:bg-civic-100 text-civic-900 border border-civic-200 text-xs font-semibold transition';
+        cycleBtn.textContent = 'Advance';
+        cycleBtn.addEventListener('click', () => cycleIssueStatus(issue.id));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.title = 'Delete complaint';
+        deleteBtn.setAttribute('aria-label', `Delete ${issue.id}`);
+        deleteBtn.className = 'p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition';
+        deleteBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+        deleteBtn.addEventListener('click', () => deleteIssue(issue.id));
+
+        controls.append(statusSelect, cycleBtn, deleteBtn);
+        bottomRow.append(metaInfo, controls);
+
+        card.append(topRow, titleEl, descEl, bottomRow);
+        return card;
+      }
+
+      // Render filtered issue cards & counters
+      function renderAll() {
+        updateCounters();
+
+        const query = searchQuery.trim().toLowerCase();
+        const filtered = issues.filter(item => {
+          const matchesStatus = activeStatusFilter === 'All' || item.status === activeStatusFilter;
+          const matchesCategory = activeCategoryFilter === 'All' || item.category === activeCategoryFilter;
+          const matchesQuery =
+            !query ||
+            item.id.toLowerCase().includes(query) ||
+            item.title.toLowerCase().includes(query) ||
+            item.location.toLowerCase().includes(query) ||
+            item.reporter.toLowerCase().includes(query);
+          return matchesStatus && matchesCategory && matchesQuery;
+        });
+
+        visibleCountBadge.textContent = `Showing ${filtered.length} of ${issues.length} ${issues.length === 1 ? 'issue' : 'issues'}`;
+
+        issueList.innerHTML = '';
+        if (filtered.length === 0) {
+          emptyState.classList.remove('hidden');
+        } else {
+          emptyState.classList.add('hidden');
+          const fragment = document.createDocumentFragment();
+          filtered.forEach(item => fragment.appendChild(createIssueCard(item)));
+          issueList.appendChild(fragment);
+        }
+      }
+
+      // Validate form inputs and show inline error feedback
+      function validateForm() {
+        const titleInput = document.getElementById('issueTitle');
+        const locationInput = document.getElementById('issueLocation');
+        const reporterInput = document.getElementById('reporterName');
+        const descInput = document.getElementById('issueDescription');
+
+        const errTitle = document.getElementById('errTitle');
+        const errLocation = document.getElementById('errLocation');
+        const errReporter = document.getElementById('errReporter');
+        const errDescription = document.getElementById('errDescription');
+
+        let isValid = true;
+
+        const checks = [
+          { input: titleInput, errEl: errTitle, min: 5, msg: 'Please enter a descriptive title (at least 5 characters).' },
+          { input: locationInput, errEl: errLocation, min: 3, msg: 'Please specify the ward, block, or street location.' },
+          { input: reporterInput, errEl: errReporter, min: 2, msg: 'Please enter the reporter name.' },
+          { input: descInput, errEl: errDescription, min: 10, msg: 'Please provide at least 10 characters describing the issue.' }
+        ];
+
+        checks.forEach(({ input, errEl, min, msg }) => {
+          const val = input.value.trim();
+          if (val.length < min) {
+            errEl.textContent = msg;
+            errEl.classList.remove('hidden');
+            input.classList.add('border-rose-500', 'ring-1', 'ring-rose-500');
+            isValid = false;
+          } else {
+            errEl.classList.add('hidden');
+            input.classList.remove('border-rose-500', 'ring-1', 'ring-rose-500');
+          }
+        });
+
+        return isValid;
+      }
+
+      // Handle new complaint submission
+      issueForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!validateForm()) return;
+
+        const newId = generateTicketId();
+        const newIssue = {
+          id: newId,
+          title: document.getElementById('issueTitle').value.trim(),
+          category: document.getElementById('issueCategory').value,
+          location: document.getElementById('issueLocation').value.trim(),
+          priority: document.getElementById('issuePriority').value,
+          reporter: document.getElementById('reporterName').value.trim(),
+          description: document.getElementById('issueDescription').value.trim(),
+          status: 'Open',
+          createdAt: formatTimestamp(new Date())
+        };
+
+        issues.unshift(newIssue);
+        saveIssues();
+        issueForm.reset();
+        renderAll();
+        showToast(`Complaint logged successfully! Tracking ID: ${newId}`, 'success', newId);
+      });
+
+      // Search & Category filter events
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        renderAll();
+      });
+
+      categoryFilter.addEventListener('change', (e) => {
+        activeCategoryFilter = e.target.value;
+        renderAll();
+      });
+
+      // Status pill selection
+      statusPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          activeStatusFilter = pill.dataset.status;
+          statusPills.forEach(btn => {
+            if (btn === pill) {
+              btn.className = 'status-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-civic-900 text-white shadow-sm transition';
+            } else {
+              btn.className = 'status-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+            }
+          });
+          renderAll();
+        });
+      });
+
+      // Clear active search/filters
+      document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+        searchQuery = '';
+        activeCategoryFilter = 'All';
+        activeStatusFilter = 'All';
+        searchInput.value = '';
+        categoryFilter.value = 'All';
+        statusPills.forEach((btn, idx) => {
+          btn.className = idx === 0
+            ? 'status-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-civic-900 text-white shadow-sm transition'
+            : 'status-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+        });
+        renderAll();
+      });
+
+      // Reset sample data handler
+      function resetSampleData() {
+        issues = SAMPLE_ISSUES.map(item => ({ ...item }));
+        saveIssues();
+        renderAll();
+        showToast('Demo dataset restored with 4 sample civic issues.', 'info');
+      }
+
+      document.getElementById('resetBtnDesktop').addEventListener('click', resetSampleData);
+      document.getElementById('resetBtnMobile').addEventListener('click', resetSampleData);
+
+      // Export current issue log as downloadable JSON file
+      function exportIssuesJson() {
+        const payload = {
+          exportedAt: new Date().toISOString(),
+          portal: 'CivicPulse',
+          totalIssues: issues.length,
+          issues: issues
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `civicpulse-issues-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast(`Exported ${issues.length} civic issue records to JSON.`, 'info');
+      }
+
+      document.getElementById('exportBtnDesktop').addEventListener('click', exportIssuesJson);
+      document.getElementById('exportBtnMobile').addEventListener('click', exportIssuesJson);
+
+      // Initialize app on load
+      loadIssues();
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
